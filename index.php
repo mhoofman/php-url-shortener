@@ -9,15 +9,46 @@ function redirect($url) {
 
 if (isset($_GET['slug'])) {
  $slug = rtrim($_GET['slug'], '!"#$%&\'()*+,-./@:;<=>[\\]^_`{|}~');
- if (is_numeric($slug) && strlen($slug) > 3) {
-  redirect('http://twitter.com/' . TWITTER_USERNAME . '/status' . $_SERVER['REQUEST_URI']);
+
+ switch(DB_FLAVOR) {
+   case "mysql":
+     $dsn = DB_FLAVOR . ":dbname=" . DB_DATABASE . ";host=" . DB_HOST;
+     break;
+   case "sqlite":
+     $dsn = DB_FLAVOR . ":" . DB_DATABASE;
+     break;
+   default:
+     exit("Unsupported database.");
+     break; 
  }
- $db = new mysqli(MYSQLI_HOST, MYSQLI_USER, MYSQLI_PASSWORD, MYSQLI_DATABASE);
- $db->query('SET NAMES "utf8"');
- $slug = $db->real_escape_string($slug);
- $result = $db->query('SELECT `url` FROM `redirect` WHERE `slug` = "' . $db->real_escape_string($slug) . '"');
- if ($result && $result->num_rows > 0 && $db->query('UPDATE `redirect` SET `hits` = `hits` + 1 WHERE `slug` = "' . $db->real_escape_string($slug) . '"')) {
-  redirect($result->fetch_object()->url);
+ 
+ try {
+   $db = new PDO($dsn, DB_USER, DB_PASSWORD);
+ } catch (PDOException $e) {
+   exit("Database connection error: " . $e->getMessage(). "\n");
+ }
+ 
+ if (DB_FLAVOR == "sqlite") {
+   $row = $db->query("select name from sqlite_master where type = 'table' and name = 'redirect'")->fetch();
+   
+   if ( ! $row) {
+     exit("Url not found.");
+   }
+ }
+ 
+ if (DB_FLAVOR == "mysql") $db->query('SET NAMES "utf8"');
+ 
+ $lookup_stmt = $db->prepare('SELECT `url` FROM `redirect` WHERE `slug` = :slug');
+ $lookup_stmt->bindParam(':slug', $slug);
+ $lookup_stmt->execute();
+ $result = $lookup_stmt->fetch();
+ 
+ if ($result) {
+  $update_stmt = $db->prepare('UPDATE `redirect` SET `hits` = `hits` + 1 WHERE `slug` = :slug');
+  $update_stmt->bindParam(':slug', $slug);
+  $update_stmt->execute();
+
+  redirect($result['url']);
  } else {
   redirect(DEFAULT_URL . $_SERVER['REQUEST_URI']);
  }
