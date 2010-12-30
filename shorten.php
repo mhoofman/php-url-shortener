@@ -46,7 +46,7 @@ try {
 }
 
 if (DB_FLAVOR == "sqlite") {
-  $row = $db->query("select name from sqlite_master where type = 'table' and name = 'something'")->fetch();
+  $row = $db->query("select name from sqlite_master where type = 'table' and name = 'redirect'")->fetch();
    
   if ( ! $row) {
     $create_table = "CREATE TABLE 'redirect' ("
@@ -56,7 +56,7 @@ if (DB_FLAVOR == "sqlite") {
                   . "'hits' bigint(20) NOT NULL default '0', "
                   . "PRIMARY KEY ('slug') "
                   . ");";
-    $first_entry = "INSERT INTO 'redirect' VALUES ('a', 'http://www.example.com', datetime('now', '-1 minute'), 1);"; 
+    $first_entry = "INSERT INTO 'redirect' VALUES ('a', 'http://www.example.com', datetime('now', '-1 day'), 1);"; 
     $db->query($create_table);
     $db->query($first_entry);
   }
@@ -64,7 +64,7 @@ if (DB_FLAVOR == "sqlite") {
  
 if (DB_FLAVOR == "mysql") $db->query('SET NAMES "utf8"');
 
-$lookup_stmt = $db->prepare('SELECT `slug` FROM `redirect` WHERE `url` = :url LIMIT 1');
+$lookup_stmt = $db->prepare("SELECT slug FROM redirect WHERE url = :url LIMIT 1");
 $lookup_stmt->bindParam(':url', $url);
 $lookup_stmt->execute();
 $result = $lookup_stmt->fetch();
@@ -72,7 +72,7 @@ $result = $lookup_stmt->fetch();
 if ($result) { // If there’s already a short URL for this URL
   exit(SHORT_URL . $result['slug']);
 } else {
- $result = $db->query('SELECT `slug`, `url` FROM `redirect` ORDER BY `date` DESC LIMIT 1')->fetch();
+ $result = $db->query("SELECT slug FROM redirect ORDER BY date DESC LIMIT 1")->fetch();
  if ($result) {
   $slug = getNextShortURL($result['slug']);
   
