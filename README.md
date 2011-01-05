@@ -2,10 +2,10 @@
 
 ## Installation
 
-1) Download the source code as located within this repository, and upload it to your web server.  
-2) With mysql: use database.sql to create the redirect table in a database of choice.
-   With sqlite: the app will generate a .sqlite database file in the root directory if not already present.
-3) Change sample.config.php to config.php and edit with your database credentials.  
+* Download the source code as located within this repository, and upload it to your web server.  
+* With mysql: use database.sql to create the redirect table in a database of choice.
+* With sqlite: the app will generate a .sqlite database file in the root directory if not already present.
+* Change sample.config.php to config.php and edit with your database credentials.  
 
 ## Features
 
